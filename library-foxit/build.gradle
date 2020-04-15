@@ -1,0 +1,109 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0'
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { url "http://repo2.maven.org/maven2/" }
+        google()
+        jcenter()
+        flatDir {
+            dirs project(':library-foxit').file('libs')
+        }
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.2"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 29
+        versionCode 13
+        versionName "7.0.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    api fileTree(dir: 'libs', include: ['*.aar'])
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.edmodo:cropper:1.0.1'
+    implementation 'androidx.multidex:multidex:2.0.0'
+    // RxJava
+    implementation "io.reactivex.rxjava2:rxjava:2.2.2"
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
+
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.60'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.60'
+
+    implementation 'org.jetbrains:annotations:13.0'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+
+//    api 'com.github.sunbx.FoxitCore:library-foxit:v2.0'
+    api project(path: ':library-rdk')
+//    api ('com.pep.core.foxit:rdk:1.0.1.0-SNAPSHOT@aar'){
+//        transitive=true
+//    }
+}
+
+task clearAar(type: Delete) {
+    delete '../FoxitRDKUIExtensions.aar'
+}
+
+task makeAar(type: Exec) {
+    dependsOn(clearAar, build)
+    def fromFile = 'build/outputs/aar/'
+    def intoFile = '../'
+    if (org.gradle.internal.os.OperatingSystem.current().windows) {
+        commandLine "cmd",
+                '-/C', 'copy', file("$fromFile/uiextensions_src-release.aar").absolutePath, file("$intoFile/FoxitRDKUIExtensions.aar")
+    } else {
+        commandLine "cp",
+                file("$fromFile/uiextensions_src-release.aar").absolutePath, file("$intoFile/FoxitRDKUIExtensions.aar")
+    }
+}
+makeAar {}.dependsOn(clearAar, build)
+
+uploadArchives {
+    repositories.mavenDeployer {
+        name = 'mavenCentralReleaseDeployer'
+
+
+        pom.version = "1.0.1.4-SNAPSHOT"
+        pom.artifactId = "foxit"
+        pom.groupId = "com.pep.core.foxit"
+        pom.name = "foxit"
+        pom.packaging = 'aar'
+
+        if (pom.version.endsWith("-SNAPSHOT")) {
+            repository(url: "http://192.168.186.4:8081/nexus/content/repositories/snapshots/") {
+                authentication(userName: NAME, password: PASSWORD)
+            }
+        } else {
+            repository(url: "http://192.168.186.4:8081/nexus/content/repositories/releases/") {
+                authentication(userName: NAME, password: PASSWORD)
+            }
+        }
+    }
+}

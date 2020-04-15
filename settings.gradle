@@ -1,0 +1,8 @@
+
+include ':library-foxit'
+include ':library-rdk'
+include ':library-bigdata'
+
+//include ':module-vertical'
+//include ':module-wisdom'
+//include ':module-demo'
