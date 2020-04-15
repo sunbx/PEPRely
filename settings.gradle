@@ -3,6 +3,6 @@ include ':library-foxit'
 include ':library-rdk'
 include ':library-bigdata'
 
-//include ':module-vertical'
+include ':app'
 //include ':module-wisdom'
 //include ':module-demo'
